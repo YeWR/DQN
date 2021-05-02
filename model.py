@@ -23,7 +23,7 @@ class DQN(nn.Module):
         x = self.fc2(x)
         return x
 
-    def select_action(self, state, epsilon=1e-3):
+    def select_action(self, state, epsilon=0.05):
         if random.random() < epsilon:
             return torch.tensor([[random.randrange(self.action_space)]], dtype=torch.long)
         else:
