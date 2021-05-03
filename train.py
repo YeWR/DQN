@@ -110,8 +110,8 @@ def train(args, use_cnn=True, use_double_q=True):
                 target_net.eval()
 
             summary_writer.add_scalar('episode loss', np.array(loss_sum).mean(), step)
-            summary_writer.add_scalar('episode reward', np.array(reward_sum).mean(), step)
-            pbar.set_description("Loss: %.8s, average episode reward %.6s, current/best test reward: %.6s(%.6s)" % (np.array(loss_sum).mean(), np.array(reward_sum).mean(), current_reward, best_reward))
+            summary_writer.add_scalar('episode reward', sum(reward_sum), step)
+            pbar.set_description("Loss: %.8s, average episode reward %.6s, current/best test reward: %.6s(%.6s)" % (np.array(loss_sum).mean(), sum(reward_sum), current_reward, best_reward))
 
 
 def train_duel(args):

@@ -46,3 +46,9 @@ class DQN(QNetwork):
         x = self.fc1(x)
         x = self.fc2(x)
         return x
+
+
+class DuelingDQN(QNetwork):
+    def __init__(self, stack, hidden, action_space):
+        super().__init__(stack, action_space)
+
