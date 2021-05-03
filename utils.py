@@ -28,7 +28,7 @@ class StackAtariWrapper(gym.Wrapper):
         observation, reward, done, info = self.env.step(action)
         observation = cv2.cvtColor(observation, cv2.COLOR_RGB2GRAY)
         observation = cv2.resize(observation, (84, 84), interpolation=cv2.INTER_AREA)
-        observation = np.asarray(observation, dtype=np.float32) # / 255.0
+        observation = np.asarray(observation, dtype=np.float32) / 255.0
         self.stack_windows.append(observation)
         return self.obs(), reward, done, info
 
