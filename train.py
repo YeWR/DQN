@@ -77,12 +77,12 @@ def train(args):
                 action_optim = online_net(next_state_batch).argmax(1, keepdim=True)
                 next_state_values = target_net(next_state_batch).gather(1, action_optim).detach()
             else:
-                next_state_values = target_net(next_state_batch).max(1)[0].detach()
+                next_state_values = target_net(next_state_batch).max(1)[0].unsqueeze(1).detach()
             next_state_values[final_mask] = 0.
             expected_state_action_values = (next_state_values * args.discount) + reward_batch
 
             # loss
-            loss = criterion(state_action_values, expected_state_action_values.unsqueeze(1))
+            loss = criterion(state_action_values, expected_state_action_values)
             loss_sum.append(loss.item())
             summary_writer.add_scalar('loss', loss.item(), step)
 
