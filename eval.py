@@ -2,6 +2,7 @@ import os
 from utils import make_atari
 from gym.wrappers import Monitor
 import numpy as np
+from tqdm import tqdm
 
 
 def evaluate(args, model, step, save_video=True, cal_std=False):
@@ -11,7 +12,7 @@ def evaluate(args, model, step, save_video=True, cal_std=False):
     model.eval()
     done = True
     reward_lst = []
-    for _ in range(args.evaluation_episodes):
+    for _ in tqdm(range(args.evaluation_episodes)):
         while True:
             if done:
                 state, reward_sum, done = env.reset(), 0, False

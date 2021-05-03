@@ -66,5 +66,6 @@ if __name__=='__main__':
         else:
             model = DuelingDQN(stack=args.stack, hidden=args.hidden, action_space=action_space).to(args.device)
 
+        model.load_state_dict(args.model_path)
         avg_reward, std_reward = evaluate(args, model, 'final', save_video=False, cal_std=True)
         print('Final reward average and std is: {:.4f}({:.3f})'.format(avg_reward, std_reward))
