@@ -4,9 +4,10 @@ from gym.wrappers import Monitor
 import numpy as np
 
 
-def evaluate(args, model, step, cal_std=False):
+def evaluate(args, model, step, save_video=True, cal_std=False):
     env = make_atari(args.env, skip=args.skip, max_episode_steps=args.max_moves)
-    env = Monitor(env, directory=os.path.join(args.res_dir, str(step)), force=True)
+    if save_video:
+        env = Monitor(env, directory=os.path.join(args.res_dir, str(step)), force=True)
     model.eval()
     done = True
     reward_lst = []
