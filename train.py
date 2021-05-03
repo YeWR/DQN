@@ -11,6 +11,8 @@ import torch
 import os
 from eval import evaluate
 from tqdm import tqdm
+from torch.nn.utils import clip_grad_norm_
+import copy
 
 
 def train(args, use_cnn=True, use_double_q=True):
@@ -26,15 +28,15 @@ def train(args, use_cnn=True, use_double_q=True):
         online_net = LinearQ(stack=args.stack, action_space=action_space).to(args.device)
     online_net.train()
 
-    if use_double_q:
-        if use_cnn:
-            target_net = DQN(stack=args.stack, hidden=args.hidden, action_space=action_space).to(args.device)
-        else:
-            target_net = LinearQ(stack=args.stack, action_space=action_space).to(args.device)
-        target_net.load_state_dict(online_net.state_dict())
-        target_net.eval()
+    target_net = copy.deepcopy(online_net)
+    # if use_cnn:
+    #     target_net = DQN(stack=args.stack, hidden=args.hidden, action_space=action_space).to(args.device)
+    # else:
+    #     target_net = LinearQ(stack=args.stack, action_space=action_space).to(args.device)
+    # target_net.load_state_dict(online_net.state_dict())
+    # target_net.eval()
 
-    optimizer = optim.Adam(online_net.parameters(), lr=args.lr)
+    optimizer = optim.Adam(online_net.parameters(), lr=args.lr, eps=1.5e-4)
     criterion = nn.SmoothL1Loss()
 
     done = True
@@ -43,6 +45,8 @@ def train(args, use_cnn=True, use_double_q=True):
     pbar = tqdm(range(int(args.steps)))
     for step in pbar:
         if done:
+            loss_sum = []
+            reward_sum = []
             state = env.reset()
 
         # random action for collecting initial data
@@ -54,10 +58,11 @@ def train(args, use_cnn=True, use_double_q=True):
         if args.reward_clip > 0:
             reward = max(min(reward, args.reward_clip), -args.reward_clip)  # Clip rewards
         memory.push(state, action, next_state, reward, done)
-        state = next_state
+        state = copy.deepcopy(next_state)
+        reward_sum.append(reward)
 
         # train and test
-        if step > args.start_steps:
+        if step > args.start_steps and step % 4 == 0:
             transitions = memory.sample(args.batch_size)
             batch = Transition(*zip(*transitions))
             # prepare data
@@ -71,20 +76,21 @@ def train(args, use_cnn=True, use_double_q=True):
             state_action_values = online_net(state_batch).gather(1, action_batch)
 
             if use_double_q:
-                next_state_values = target_net(next_state_batch).max(1)[0].detach()
+                action_optim = online_net(next_state_batch).argmax(1, keepdim=True)
+                next_state_values = target_net(next_state_batch).gather(1, action_optim).detach()
             else:
-                next_state_values = online_net(next_state_batch).max(1)[0].detach()
+                next_state_values = target_net(next_state_batch).max(1)[0].detach()
             next_state_values[final_mask] = 0.
             expected_state_action_values = (next_state_values * args.discount) + reward_batch
 
             # loss
             loss = criterion(state_action_values, expected_state_action_values.unsqueeze(1))
+            loss_sum.append(loss.item())
             summary_writer.add_scalar('loss', loss.item(), step)
 
             optimizer.zero_grad()
             loss.backward()
-            for param in online_net.parameters():
-                param.grad.data.clamp_(-1, 1)
+            clip_grad_norm_(online_net.parameters(), 10)
             optimizer.step()
 
             if step % args.eval_steps == 0:
@@ -99,11 +105,13 @@ def train(args, use_cnn=True, use_double_q=True):
                     best_reward = current_reward
                     torch.save(online_net.state_dict(), os.path.join(args.res_dir, 'model.pth'))
 
-            if step % args.target_steps == 0 and use_double_q:
+            if step % args.target_steps == 0:
                 target_net.load_state_dict(online_net.state_dict())
                 target_net.eval()
 
-            pbar.set_description("Loss: %.8s, current/best reward: %.6s(%.6s)" % (loss.item(), current_reward, best_reward))
+            summary_writer.add_scalar('episode loss', np.array(loss_sum).mean(), step)
+            summary_writer.add_scalar('episode reward', np.array(reward_sum).mean(), step)
+            pbar.set_description("Loss: %.8s, average episode reward %.6s, current/best test reward: %.6s(%.6s)" % (np.array(loss_sum).mean(), np.array(reward_sum).mean(), current_reward, best_reward))
 
 
 def train_duel(args):

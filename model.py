@@ -32,9 +32,9 @@ class DQN(QNetwork):
     def __init__(self, stack, hidden, action_space):
         super().__init__(stack, action_space)
 
-        self.convs = nn.Sequential(nn.Conv2d(stack, 32, 8, stride=4, padding=0), nn.BatchNorm2d(32), nn.ReLU(),
-                                   nn.Conv2d(32, 64, 4, stride=2, padding=0), nn.BatchNorm2d(64), nn.ReLU(),
-                                   nn.Conv2d(64, 64, 3, stride=1, padding=0), nn.BatchNorm2d(64), nn.ReLU())
+        self.convs = nn.Sequential(nn.Conv2d(stack, 32, 8, stride=4, padding=0), nn.ReLU(),
+                                   nn.Conv2d(32, 64, 4, stride=2, padding=0), nn.ReLU(),
+                                   nn.Conv2d(64, 64, 3, stride=1, padding=0), nn.ReLU())
 
         self.conv_output_size = 3136
         self.fc1 = nn.Linear(self.conv_output_size, hidden)

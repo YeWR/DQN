@@ -14,7 +14,7 @@ def evaluate(args, model, step):
             if done:
                 state, reward_sum, done = env.reset(), 0, False
 
-            action = model.select_action(state, args.epsilon)  # Choose an action ε-greedily
+            action = model.select_action(state, args.epsilon).item()  # Choose an action ε-greedily
             state, reward, done, _ = env.step(action)  # Step
             reward_sum += reward
             if args.render:

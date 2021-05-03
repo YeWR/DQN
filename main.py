@@ -22,7 +22,7 @@ if __name__=='__main__':
     parser.add_argument('--batch_size', type=int, default=32, help='batch size')
     parser.add_argument('--hidden', type=int, default=512, help='hidden size of DQN')
     parser.add_argument('--device', type=str, default='cuda', help='device')
-    parser.add_argument('--lr', type=float, default=0.0001, help='learning rate')
+    parser.add_argument('--lr', type=float, default=0.0000625, help='learning rate')
     parser.add_argument('--discount', type=float, default=0.99, help='discount rate')
     parser.add_argument('--epsilon', type=float, default=0.05, help='discount rate')
     parser.add_argument('--evaluation_episodes', type=int, default=10, help='evaluation episodes')
