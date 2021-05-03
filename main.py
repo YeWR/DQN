@@ -1,6 +1,9 @@
 import argparse
 import os
 from train import train
+from eval import evaluate
+from model import LinearQ, DQN, DuelingDQN
+from utils import make_atari
 
 
 def make_dir(args):
@@ -28,12 +31,14 @@ if __name__=='__main__':
     parser.add_argument('--lr', type=float, default=0.0000625, help='learning rate')
     parser.add_argument('--discount', type=float, default=0.99, help='discount rate')
     parser.add_argument('--epsilon', type=float, default=0.05, help='discount rate')
-    parser.add_argument('--evaluation_episodes', type=int, default=10, help='evaluation episodes')
+    parser.add_argument('--evaluation_episodes', type=int, default=20, help='evaluation episodes')
     parser.add_argument('--render', type=bool, default=False, help='render of test')
     parser.add_argument('--res_dir', type=str, default='results/', help='results dir')
     parser.add_argument('--double', type=bool, default=False, help='use double')
     parser.add_argument('--arch', type=str, default='DeepQ', help='architecture',
                         choices=['LinearQ', 'DeepQ', 'DuelingDeepQ'])
+    parser.add_argument('--eval', type=bool, default=False, help='only evaluate')
+    parser.add_argument('--model_path', type=str, default='None', help='only evaluate')
 
     # env
     parser.add_argument('--skip', type=int, default=4, help='frame skip')
@@ -47,4 +52,19 @@ if __name__=='__main__':
     args = parser.parse_args()
     make_dir(args)
 
-    train(args)
+    if not args.eval:
+        train(args)
+    else:
+        args.evaluation_episodes = 100
+        env = make_atari(args.env, skip=args.skip, max_episode_steps=args.max_moves)
+        action_space = env.action_space.n
+        assert os.path.exists(args.model_path)
+        if args.arch == 'LinearQ':
+            model = LinearQ(stack=args.stack, action_space=action_space).to(args.device)
+        elif args.arch == 'DeepQ':
+            model = DQN(stack=args.stack, hidden=args.hidden, action_space=action_space).to(args.device)
+        else:
+            model = DuelingDQN(stack=args.stack, hidden=args.hidden, action_space=action_space).to(args.device)
+
+        avg_reward, std_reward = evaluate(args, model, 'final', cal_std=True)
+        print('Final reward average and std is: {:.4f}({:.3f})'.format(avg_reward, std_reward))

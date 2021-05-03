@@ -1,14 +1,15 @@
 import os
 from utils import make_atari
 from gym.wrappers import Monitor
+import numpy as np
 
 
-def evaluate(args, model, step):
+def evaluate(args, model, step, cal_std=False):
     env = make_atari(args.env, skip=args.skip, max_episode_steps=args.max_moves)
     env = Monitor(env, directory=os.path.join(args.res_dir, str(step)), force=True)
     model.eval()
     done = True
-    avg_reward = []
+    reward_lst = []
     for _ in range(args.evaluation_episodes):
         while True:
             if done:
@@ -21,8 +22,11 @@ def evaluate(args, model, step):
                 env.render()
 
             if done:
-                avg_reward.append(reward_sum)
+                reward_lst.append(reward_sum)
                 break
     env.close()
-    avg_reward = sum(avg_reward) / len(avg_reward)
-    return avg_reward
+    reward_lst = np.array(reward_lst)
+    if not cal_std:
+        return reward_lst.mean()
+    else:
+        return reward_lst.mean(), reward_lst.std()
