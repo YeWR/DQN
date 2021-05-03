@@ -22,7 +22,7 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser(description='DQN')
     parser.add_argument('--env', type=str, default='EnduroNoFrameskip-v4', help='Name of the environment')
     # training
-    parser.add_argument('--steps', type=int, default=5e6, help='total steps')
+    parser.add_argument('--steps', type=int, default=2e6, help='total steps')
     parser.add_argument('--eval_steps', type=int, default=1e5, help='evaluation steps')
     parser.add_argument('--start_steps', type=int, default=2e4, help='start steps')
     parser.add_argument('--target_steps', type=int, default=1e4, help='evaluation steps')
